@@ -1,3 +1,8 @@
+#!/bin/bash
+
+# set fast fail
+set -eo pipefail
+
 ORIGINAL_PWD=$PWD
 INSTALLER_LOCAL_DIR=$GITHUB_ACTION_PATH/tmp
 INSTALLER_LOCAL_PATH=$INSTALLER_LOCAL_DIR/get-boogie.sh
