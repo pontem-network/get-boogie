@@ -6,63 +6,35 @@ branding:
   color: "purple"
 inputs:
   ref:
-    description: Branch or commit. Read as version of installer.
-    default: 927c229cd8dfa6dcd50ba84811f80d10496c76d2
+    description: Branch or commit pointing to pontem-network/move repo. Read as version of installer. Default is `main`.
+    default: main
     required: false
   token:
     description: GITHUB_TOKEN. Optional
     required: false
-  install_dir:
-    description: Installation directory. Default is `.`
-    default: "."
-    required: false
 outputs:
-  DOTNET_ROOT: ${{ steps.installer.outputs.DOTNET_ROOT }}
-  Z3_EXE: ${{ steps.installer.outputs.Z3_EXE }}
-  BOOGIE_EXE: ${{ steps.installer.outputs.BOOGIE_EXE }}
-  CVC5_EXE: ${{ steps.installer.outputs.CVC5_EXE }}
-
+  DOTNET_ROOT:
+    description: .NET root directory
+    value: ${{ steps.installer.outputs.DOTNET_ROOT }}
+  Z3_EXE:
+    description: Z3 executable path
+    value: ${{ steps.installer.outputs.Z3_EXE }}
+  BOOGIE_EXE:
+    description: Boogie executable path
+    value: ${{ steps.installer.outputs.BOOGIE_EXE }}
+  CVC5_EXE:
+    description: Cvc5 executable path
+    value: ${{ steps.installer.outputs.CVC5_EXE }}
 runs:
   using: composite
   steps:
     - id: installer
-      run: |
-        INSTALLER_LOCAL_NAME="get-boogie.sh"
-        INSTALLER_URL="https://raw.githubusercontent.com/pontem-network/move/${{inputs.ref}}/scripts/dev_setup.sh"
-        SECRET_TOKEN="${{inputs.token}}""
-
-        # download the installer
-        if [ -z $SECRET_TOKEN ]; then
-          curl -o "$INSTALLER_LOCAL_NAME" \
-              -s $INSTALLER_URL;
-        else
-          curl -o "$INSTALLER_LOCAL_NAME" \
-              -H "Authorization: Bearer ${SECRET_TOKEN}" \
-              -s $INSTALLER_URL;
-        fi;
-
-        # fix permissions
-        if [ ! "$RUNNER_OS" == "Windows" ]; then
-            sudo chown runner INSTALLER_LOCAL_NAME && chmod +x INSTALLER_LOCAL_NAME
-        fi
-
-        # prepare
-        mkdir -p ${{inputs.install_dir}}
-
-        # execute the installer
-        ./$INSTALLER_LOCAL_NAME -byp
-
-        # post setup
-        source $HOME/.profile
-        echo "$HOME/bin" >> $GITHUB_PATH
-        echo "${DOTNET_ROOT}/tools" >> $GITHUB_PATH
-        echo "DOTNET_ROOT=${DOTNET_ROOT}" >> $GITHUB_ENV
-        echo "Z3_EXE=${Z3_EXE}" >> $GITHUB_ENV
-        echo "BOOGIE_EXE=${BOOGIE_EXE}" >> $GITHUB_ENV
-        echo "CVC5_EXE=${CVC5_EXE}" >> $GITHUB_ENV
-        echo ::set-output name=DOTNET_ROOT::"$DOTNET_ROOT"
-        echo ::set-output name=Z3_EXE::"$Z3_EXE"
-        echo ::set-output name=BOOGIE_EXE::"$BOOGIE_EXE"
-        echo ::set-output name=CVC5_EXE::"$CVC5_EXE"
-
       shell: bash
+      run: |
+        if [ ! "$RUNNER_OS" == "Windows" ]; then
+             sudo chown runner ${{ github.action_path }}/installer.sh && chmod +x ${{ github.action_path }}/installer.sh
+        fi
+        $GITHUB_ACTION_PATH/installer.sh
+      env:
+        INP_REF: ${{inputs.ref || 'main'}}
+        SECRET_TOKEN: ${{inputs.token}}

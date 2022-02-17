@@ -1,0 +1,71 @@
+name: Test
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  tests:
+    name: ${{ matrix.os }} ${{ matrix.token && 'with token' || '' }} from ${{ matrix.ref && matrix.ref || 'default ref' }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: true
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          # TODO: return windows back when it supported
+          # - windows-latest
+        token:
+          # use token
+          - true
+          # ignore token
+          - false
+          - ""
+        ref:
+          # specified ref
+          - 927c229cd8dfa6dcd50ba84811f80d10496c76d2
+          - main
+          # not specified ref
+          - false
+          - ""
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install with${{ matrix.token && ' token' || 'out token' }} from ${{ matrix.ref && matrix.ref || 'default' }}
+        id: installer
+        uses: ./
+        with:
+          token: ${{ matrix.token && secrets.GITHUB_TOKEN || '' }}
+          ref: ${{ matrix.ref && matrix.ref || '' }}
+
+      - name: outputs
+        run: |
+          [ -e "${{ steps.installer.outputs.Z3_EXE }}" ] || (echo "::error ::Missing output Z3_EXE" && exit 1)
+          [ -e "${{ steps.installer.outputs.CVC5_EXE }}" ] || (echo "::error ::Missing output CVC5_EXE" && exit 1)
+          [ -e "${{ steps.installer.outputs.BOOGIE_EXE }}" ] || (echo "::error ::Missing output BOOGIE_EXE" && exit 1)
+          [ -d "${{ steps.installer.outputs.DOTNET_ROOT }}" ] || (echo "::error ::Missing output DOTNET_ROOT" && exit 1)
+
+      - name: ENV
+        run: |
+          [ -e "$Z3_EXE" ] || (echo "::error ::Missing output Z3_EXE" && exit 1)
+          [ -e "$CVC5_EXE" ] || (echo "::error ::Missing output CVC5_EXE" && exit 1)
+          [ -e "$BOOGIE_EXE" ] || (echo "::error ::Missing output BOOGIE_EXE" && exit 1)
+          [ -d "$DOTNET_ROOT" ] || (echo "::error ::Missing output DOTNET_ROOT" && exit 1)
+
+      - name: equality
+        run: |
+          [ "$Z3_EXE" == "${{ steps.installer.outputs.Z3_EXE }}" ] || (echo "::error ::Env not eq output Z3_EXE" && exit 1)
+          [ "$CVC5_EXE" == "${{ steps.installer.outputs.CVC5_EXE }}" ] || (echo "::error ::Env not eq output CVC5_EXE" && exit 1)
+          [ "$BOOGIE_EXE" == "${{ steps.installer.outputs.BOOGIE_EXE }}" ] || (echo "::error ::Env not eq output BOOGIE_EXE" && exit 1)
+          [ "$DOTNET_ROOT" == "${{ steps.installer.outputs.DOTNET_ROOT }}" ] || (echo "::error ::Env not eq output DOTNET_ROOT" && exit 1)
+
+      - name: $PATH
+        run: |
+          which z3 || (echo "::error ::Missing z3 from PATH." && exit 1)
+          which boogie || (echo "::error ::Missing boogie from PATH." && exit 1)
