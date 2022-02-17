@@ -1,0 +1,52 @@
+name: Test action
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: true
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          # TODO: return windows back when it supported
+          - windows-latest
+        token:
+          - ""
+          - ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install with token
+        id: installer
+        uses: ./
+        with:
+          token: ${{ matrix.token }}
+
+      - name: OUTPUT
+        run: |
+          echo "${{ steps.installer.outputs.DOTNET_ROOT }}"
+          echo "${{ steps.installer.outputs.Z3_EXE }}"
+          echo "${{ steps.installer.outputs.BOOGIE_EXE }}"
+          echo "${{ steps.installer.outputs.CVC5_EXE }}"
+
+      - name: ENV
+        run: |
+          echo "$DOTNET_ROOT"
+          echo "$Z3_EXE"
+          echo "$BOOGIE_EXE"
+          echo "$CVC5_EXE"
+
+      - name: $PATH
+        run: |
+          which z3
+          which boogie
