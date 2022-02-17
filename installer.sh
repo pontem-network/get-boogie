@@ -26,6 +26,7 @@ if [ ! "$RUNNER_OS" == "Windows" ]; then
 fi
 
 # prepare
+touch $INSTALLER_LOCAL_DIR/rust-toolchain
 if [ ! -f rust-toolchain ]; then
   REMOVE_RUST_TOOLCHAIN=true
   touch rust-toolchain
