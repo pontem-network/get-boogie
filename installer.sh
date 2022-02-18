@@ -26,13 +26,17 @@ if [ ! "$RUNNER_OS" == "Windows" ]; then
 fi
 
 # prepare
+cd $INSTALLER_LOCAL_DIR/..
 if [ ! -f rust-toolchain ]; then
   REMOVE_RUST_TOOLCHAIN=true
   touch rust-toolchain
 fi
 
+cd $ORIGINAL_PWD
+
 # execute the installer
-INSTALL_DIR=$INSTALLER_LOCAL_DIR $INSTALLER_LOCAL_PATH -byp
+# INSTALL_DIR=$INSTALLER_LOCAL_DIR $INSTALLER_LOCAL_PATH -byp
+$INSTALLER_LOCAL_PATH -byp
 
 # post setup
 source $HOME/.profile
@@ -49,5 +53,7 @@ echo "::set-output name=CVC5_EXE::$CVC5_EXE"
 
 # post clean
 if [ $REMOVE_RUST_TOOLCHAIN ]; then
+  cd $INSTALLER_LOCAL_DIR/..
   rm rust-toolchain
+  cd $ORIGINAL_PWD
 fi
